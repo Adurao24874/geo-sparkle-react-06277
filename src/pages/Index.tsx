@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import InteractiveGlobe, { TargetLocation } from '@/components/InteractiveGlobe';
 import LocationForm from '@/components/ui/LocationForm';
 import { Button } from '@/components/ui/button';
+import DownloadReportButton from '@/components/DownloadReportButton';
 import { Card } from '@/components/ui/card';
 import AnalysisCard from '@/components/AnalysisCard';
 import LargeSlider from '@/components/LargeSlider';
@@ -135,13 +136,18 @@ const Index = () => {
       {/* Content */}
   <div className="w-full max-w-none ml-0 mr-0 relative z-10">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-8" id="report-summary">
           <h1 className="text-5xl md:text-7xl font-bold mb-4 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
             Will it Rain on My Parade ?
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
             Explore climate signals across the globe. Click a city or locate a place to get a quick climate snapshot.
           </p>
+          {analysis && (
+            <div className="mt-4 flex justify-center">
+              <DownloadReportButton fileName={`climate-report-${analysis?.forecast_date || 'today'}.pdf`} />
+            </div>
+          )}
         </div>
         {/* Charts and slider moved to the bottom of the page for full-width layout */}
 
@@ -180,7 +186,7 @@ const Index = () => {
         {/* Three-column layout: left analysis (narrow), center globe (wide), right stats (narrow) */}
   <div className="relative mb-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left analysis (col 1-3) */}
-          <div className="col-span-12 lg:col-span-3 flex justify-start">
+          <div className="col-span-12 lg:col-span-3 flex justify-start" id="report-analysis">
             <AnalysisCard analysis={analysis} analyzing={analyzing} />
           </div>
 
@@ -234,10 +240,10 @@ const Index = () => {
         <div className="mt-8 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12">
             <div className="hidden lg:block lg:col-span-3" />
-            <div className="col-span-1 lg:col-span-7 flex items-center">
-              <div className="w-full bg-card/90 p-4 rounded border border-border shadow-md">
-                <LargeSlider value={analysis?.climate_risk_score ?? 0} />
-              </div>
+            <div className="col-span-12 lg:col-span-7 flex items-center" id="report-slider">
+                <div className="w-full bg-card/90 p-4 rounded border border-border shadow-md">
+                  <LargeSlider value={analysis?.climate_risk_score ?? 0} />
+                </div>
             </div>
             <div className="hidden lg:block lg:col-span-2" />
           </div>
@@ -247,7 +253,7 @@ const Index = () => {
         <div className="mt-6 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div className="col-span-1 lg:col-span-3" />
-            <div className="col-span-1 lg:col-span-7">
+            <div className="col-span-1 lg:col-span-7" id="report-charts">
               <div className="bg-card/90 p-4 rounded-lg border border-border shadow-sm">
                 <ClimatologyCharts lat={targetLocation?.lat} lon={targetLocation?.lon} targetDate={analysis?.forecast_date} buffer={3} startYear={2000} endYear={new Date().getFullYear()} param={'PRECTOT'} />
               </div>
