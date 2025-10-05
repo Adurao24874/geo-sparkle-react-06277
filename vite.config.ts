@@ -26,4 +26,18 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    // Allow larger chunks (2MB) before emitting warnings and split some heavy deps
+    chunkSizeWarningLimit: 2000,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('three')) return 'vendor_three';
+            return 'vendor';
+          }
+        }
+      }
+    }
+  }
 }));

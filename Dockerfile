@@ -18,7 +18,7 @@ FROM node:18-slim
 WORKDIR /app
 
 # Install python3 and pip
-RUN apt-get update && apt-get install -y python3 python3-pip ca-certificates --no-install-recommends && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y python3 python3-venv python3-pip ca-certificates --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
 # Copy built frontend and server files
 COPY --from=build /app/dist ./dist
@@ -32,9 +32,14 @@ COPY --from=build /app/requirements.txt ./requirements.txt
 RUN npm ci --only=production --silent || true
 
 # Install Python requirements if present
-RUN if [ -f requirements.txt ]; then pip3 install --no-cache-dir -r requirements.txt || true; fi
+RUN if [ -f requirements.txt ]; then \
+			python3 -m venv /opt/venv && \
+			/opt/venv/bin/pip install --upgrade pip setuptools wheel && \
+			/opt/venv/bin/pip install --no-cache-dir -r requirements.txt || true; \
+		fi
 
 ENV NODE_ENV=production
+ENV PATH="/opt/venv/bin:$PATH"
 EXPOSE 3000
 
 # Start the Node server which serves the built frontend and API
