@@ -5,7 +5,6 @@ import gsap from 'gsap';
 
 import LocationMarker from './LocationMarker';
 import { TargetLocation } from './InteractiveGlobe';
-import { TextureLoader } from 'three';
 import getStarfield from '../../3d-globe-with-threejs/src/getStarfield.js';
 
 interface GlobeProps {
@@ -97,9 +96,9 @@ const Globe = ({ targetLocation, cameraRef, controlsRef, onFocusComplete }: Glob
     dragStateRef.current.isDragging = false;
   };
 
-  // Load earth map + cloud textures
-  const earthMap = useLoader(TextureLoader, new URL('../assets/earth-day.jpg', import.meta.url).href);
-  const cloudMap = useLoader(TextureLoader, new URL('../assets/earth-clouds.jpg', import.meta.url).href);
+  // Load earth map + cloud textures (use THREE.TextureLoader to avoid mixing named and namespace imports)
+  const earthMap = useLoader(THREE.TextureLoader, new URL('../assets/earth-day.jpg', import.meta.url).href);
+  const cloudMap = useLoader(THREE.TextureLoader, new URL('../assets/earth-clouds.jpg', import.meta.url).href);
 
   // Try to find a night/lights texture in the assets folder (e.g. earth-lights.jpg)
   // Use import.meta.globEager so we can detect presence at build time. If none found,
@@ -108,23 +107,12 @@ const Globe = ({ targetLocation, cameraRef, controlsRef, onFocusComplete }: Glob
   const firstVal: any = Object.values(lightsModules)[0];
   const lightsUrl = firstVal ? firstVal.default : null;
   const transparentDataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-  const lightsMap = useLoader(TextureLoader, lightsUrl || transparentDataUrl);
+  const lightsMap = useLoader(THREE.TextureLoader, lightsUrl || transparentDataUrl);
   const hasLights = !!lightsUrl;
 
-  // Ensure correct color encoding for PBR/standard materials
-  try {
-    // Some three/@types versions don't expose sRGBEncoding in the TS defs.
-    // Do a runtime lookup and assign defensively to avoid type errors.
-    const sRGB = (THREE as any).sRGBEncoding || (THREE as any).SRGBEncoding || (THREE as any).SRGBColorSpace || (THREE as any).LinearSRGBColorSpace;
-    if (earthMap) {
-      (earthMap as any).encoding = sRGB || (earthMap as any).encoding;
-      try { earthMap.flipY = true; } catch (e) {}
-    }
-    if (cloudMap) (cloudMap as any).encoding = sRGB || (cloudMap as any).encoding;
-    if (lightsMap && hasLights) (lightsMap as any).encoding = sRGB || (lightsMap as any).encoding;
-  } catch (e) {
-    // ignore if encoding not supported in this three version
-  }
+    // (Optional) Color encoding adjustments intentionally omitted to avoid bundler-specific
+    // static analysis and export warnings across different three.js builds. Textures will
+    // use their default encoding which is compatible with the materials used here.
 
   // Apply an Earth's axial tilt so it looks natural
   useEffect(() => {
