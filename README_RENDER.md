@@ -1,24 +1,43 @@
-Render deployment steps
+Deploying to Render (Docker)
 
-1) Create a Render account (https://render.com) and connect your GitHub account.
+This project includes a `render.yaml` manifest and a production `Dockerfile` that builds the Vite app and packages a small Node server.
 
-2) Import the repository:
-   - Click "New" -> "Web Service" -> "Connect a repository" and select `Adurao24874/geo-sparkle-react-06277`.
-   - Render will detect the `render.yaml` manifest and propose the `geo-sparkle-react-06277` service.
+Quick checklist before deploying:
 
-3) Configure environment variables in the Render dashboard (do NOT store secrets in the repo):
-   - `VITE_GOOGLE_MAPS_API_KEY` = <your Google Maps API key>
-   - `NASA_PROXY_URL` = (optional) a proxy or leave blank
+- Ensure `.env` is NOT committed (this repo's `.gitignore` now includes `.env`).
+- Create the following secrets in the Render dashboard (Service → Environment → Secrets):
+  - `EARTHDATA_USER` — your Earthdata username
+  - `EARTHDATA_PASS` — your Earthdata password
+  - `NASA_API_KEY` — (optional) NASA API key to ease requests to NASA endpoints
+  - `GOOGLE_MAPS_API_KEY` — (optional) server-side geocoding/autocomplete fallback
 
-4) Deploy:
-   - Click "Create Web Service". Render will build the Docker image using the `Dockerfile` in the repo and start the service on a public URL.
+Deploy steps (two options):
 
-5) Logs and health:
-   - Use the Render dashboard to follow build logs and view runtime logs.
+1) Let Render build from your repo (recommended for smaller teams):
+   - In Render, choose "New → Web Service" and connect the `Adurao24874/geo-sparkle-react-06277` repo.
+   - Render should detect `render.yaml` and create the `geo-sparkle-react-06277` service using the `Dockerfile` in the repo.
+   - Set the secrets listed above using Render's UI and click "Create Web Service".
 
-Notes:
-- The Dockerfile installs Node and Python, builds the Vite frontend, and runs `server.js` which serves the static build and API endpoints.
-- If your Python scripts require extra packages, ensure `requirements.txt` lists them.
-- If you need any additional env vars (for Google API restrictions or API keys), add them in the Render UI.
+2) Push a pre-built image to a registry (recommended if you want faster deploys):
+   - Build and push to GHCR/DockerHub:
 
-If you want, I can trigger the import and creation directly via the Render API if you provide an API key with the necessary permissions. Otherwise follow these steps in the UI and I can help troubleshoot any build errors you see in Render's logs.
+```powershell
+docker build -t ghcr.io/<OWNER>/geo-sparkle:latest .
+docker push ghcr.io/<OWNER>/geo-sparkle:latest
+```
+
+   - In Render, create a new Docker service and point it to your registry image.
+
+Validation and health checks
+- The service exposes `/health` which returns { ok: true } when healthy. The `render.yaml` uses `/health` as the health check path.
+- Server serves the SPA at `/` and static assets from `/assets`.
+
+Troubleshooting notes
+- If builds fail on Render while installing Python packages (pandas/scipy), try temporarily increasing the instance size to allow the build to complete, or build the image locally and push to a registry.
+- If the client reports reload.js / ws errors in console: open the site in an Incognito window (extensions disabled) to confirm whether a browser extension is probing your origin. The server is production-ready and won't serve the dev websocket.
+
+Security
+- Do not commit `.env`.
+- Use Render secrets to keep credentials safe and rotate them if exposed.
+
+If you want, I can also add a small GitHub Actions workflow that builds the Docker image and pushes it to GHCR automatically on merge to `main`.

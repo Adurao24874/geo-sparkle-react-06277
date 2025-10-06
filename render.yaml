@@ -1,18 +1,28 @@
 services:
-  - type: web
-    name: geo-sparkle-react-06277
-    env: docker
-    branch: main
-    region: oregon
-    dockerfilePath: Dockerfile
+  - type: "web"
+    name: "geo-sparkle-react-06277"
+    env: "docker"
+    branch: "main"
+    region: "oregon"
+    dockerfilePath: "Dockerfile"
     autoDeploy: true
-    plan: free
-    instanceType: starter
-    healthCheckPath: /
+    plan: "free"
+    instanceType: "starter"
+    healthCheckPath: "/health"
+    startCommand: "node server.js"
     envVars:
-      - key: NODE_ENV
-        value: production
-      - key: VITE_GOOGLE_MAPS_API_KEY
-        value: ''
-      - key: NASA_PROXY_URL
-        value: ''
+      - key: "NODE_ENV"
+        value: "production"
+      - key: "VITE_GOOGLE_MAPS_API_KEY"
+        value: ""
+      - key: "NASA_PROXY_URL"
+        value: ""
+    secretEnvVars:
+      - key: "EARTHDATA_USER"
+        name: "EARTHDATA_USER"
+      - key: "EARTHDATA_PASS"
+        name: "EARTHDATA_PASS"
+      - key: "NASA_API_KEY"
+        name: "NASA_API_KEY"
+      - key: "GOOGLE_MAPS_API_KEY"
+        name: "GOOGLE_MAPS_API_KEY"
